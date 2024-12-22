@@ -1,19 +1,12 @@
 import React from 'react';
-import { Route, Navigate } from 'react-router-dom';
-import { isAuthenticated } from '../utils/auth_util';
+import { Route } from 'react-router-dom';
 
-const UnprotectedRoute = ({ component: Component, ...rest }) => {
+const UnprotectedRoute = ({ component: Component, ...rest }) => {    
     return (
         <Route
             key={rest.path}
             path={rest.path}
-            element={
-                isAuthenticated() && ["/", "/login"].includes(rest.path) ? (
-                    <Navigate to={"/profile"} />
-                ) : (
-                    Component
-                )
-            }
+            element={Component}
         />
     );
 };

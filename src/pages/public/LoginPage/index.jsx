@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
 import { Form, Input, Flex, message } from 'antd';
-import { LockOutlined, UserOutlined } from '@ant-design/icons';
+import { LockOutlined, UserOutlined, EyeInvisibleOutlined, EyeTwoTone } from '@ant-design/icons';
 import { Button, Avatar, Checkbox } from "@mui/joy";
-import { setCookie } from "../../../utils/cookie_util";
-import { login } from "../../../api/user_api";
-import { useNavigate } from 'react-router-dom';
+import { setCookie, findCookie } from "../../../utils/cookie_util";
+import { login, getUserInfo } from "../../../api/user_api";
+import { useNavigate, Navigate } from 'react-router-dom';
+import { isAuthenticated } from '../../../utils/auth_util';
 
 const LoginPage = () => {
     const [form] = Form.useForm();
-    const [remember, setRemember] = useState(false);
     const [Message, contextHolder] = message.useMessage();
     const navigate = useNavigate();
+    const [email, setEmail] = useState(findCookie("email") || "");
+    const [password, setPassword] = useState(findCookie("password") || "");
+    const [remember, setRemember] = useState(email !== "" && password !== "");
+
+    if (isAuthenticated()) {
+        return <Navigate to="/profile" />;
+    }
 
     const onFinish = async (values) => {
         if (remember) {
@@ -21,7 +28,13 @@ const LoginPage = () => {
         if (res.data.token_type && res.data.token_type === "bearer") {
             localStorage.setItem("accessToken", res.data.access_token);
             localStorage.setItem("refreshToken", res.data.refresh_token);
-            navigate("/profile");
+            const userInfo = await getUserInfo();
+            if (userInfo.data.code === 0) {
+                localStorage.setItem("userInfo", JSON.stringify(userInfo.data.data));
+                navigate("/profile");
+            } else {
+                Message.error(userInfo.data.message);
+            }
         } else {
             Message.error(res.data.message);
         }
@@ -44,8 +57,8 @@ const LoginPage = () => {
                         form={form}
                         name="login"
                         initialValues={{
-                            email: "user@email.com",
-                            password: "0000",
+                            email: email,
+                            password: password,
                         }}
                         onFinish={onFinish}
                     >
@@ -78,13 +91,17 @@ const LoginPage = () => {
                                 message: 'Please input your password!',
                             },
                             ]}
-                        ><Input prefix={<LockOutlined />} placeholder="Password" />
+                        ><Input.Password 
+                            prefix={<LockOutlined />} 
+                            placeholder="Password"
+                            iconRender={(visible) => (visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />)}
+                        />
                         </Form.Item>
 
                         {/* Operations */}
                         <Form.Item>
                             <Flex justify="space-between" align="center">
-                            <Checkbox onChange={onRmbChange} size="sm" label="Remember me"></Checkbox>
+                            <Checkbox checked={remember} onChange={onRmbChange} size="sm" label="Remember me"></Checkbox>
                             <a href="#">Forgot password</a>
                             </Flex>
                         </Form.Item>

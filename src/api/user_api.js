@@ -10,13 +10,19 @@ const login = async (email, password) => {
 
 const signup = async ({...data}) => {
     return axios.post(
-        "/api/user/signup",
+        "/api/users/register",
         data,
-        { headers: { "Content-Type": "application/json" }}
+    )
+}
+
+const getUserInfo = async () => {
+    return axios.get(
+        "/api/users/me",
     )
 }
 
 export {
     login,
     signup,
+    getUserInfo,
 }
